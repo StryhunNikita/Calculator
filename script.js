@@ -19,6 +19,13 @@ function updateDisplay() {
 }
 
 function appendNumber(num) {
+    if (num === "." && (currentInput === "" || currentInput === "-")) {
+        currentInput += "0.";
+        fullExpression += "0.";
+        updateDisplay();
+        return;
+    }
+
     if (num === "." && currentInput.includes(".")) return;
 
     if (fullExpression.includes("=") || currentInput === "Ошибка") {
@@ -38,20 +45,22 @@ function appendNumber(num) {
 
 function clearAll() {
     currentInput = "";
-    previousInput = "";
-    currentOperator = "";
     fullExpression = "";
     updateDisplay();
 }
 
 function chooseOperator(operator) {
-    if (currentInput === "") return;
+    if (currentInput === "" && !fullExpression.includes("=")) return;
+ 
+    if (fullExpression.includes("=")) {
+        fullExpression = currentInput;
+    }
 
-    currentOperator = operator;
-    previousInput = currentInput;
-    currentInput = "";
     fullExpression += " " + operator + " ";
-    updateDisplay(previousInput + " " + operator);
+    currentInput = "";
+
+    clearOrBackSpaceButton.textContent = "←";
+    updateDisplay();
 }
 
 function calculate() {
@@ -60,8 +69,6 @@ function calculate() {
         currentInput = result.toString();
         fullExpression = currentInput;
         updateDisplay();
-        currentInput = "";
-        previousInput = "";
     } catch (error) {
         currentInput = "Ошибка";
         fullExpression = "";
@@ -88,13 +95,23 @@ function toggleSign() {
 }
 
 function deleteLast() {
-    if (currentInput === "") return;
+    if (currentInput !== "") {
+        currentInput = currentInput.slice(0, -1);
+        fullExpression = fullExpression.slice(0, -1);
+    } else if (fullExpression.endsWith(" ")) {
+        fullExpression = fullExpression.slice(0, -3);
+    } else if (fullExpression.endsWith(".")) {
+        fullExpression = fullExpression.slice(0, -1);
+    }
 
-    currentInput = currentInput.slice(0, -1);
-    fullExpression = fullExpression.slice(0, -1);
-
-    if (currentInput === "") {
+    if (!/\d/.test(fullExpression)) {
+        currentInput = "";
         clearOrBackSpaceButton.textContent = "AC";
+    }
+
+    const lastToken = fullExpression.trim().split(" ").slice(-1)[0];
+    if (/^\-?\d+(\.\d+)?$/.test(lastToken)) {
+        currentInput = lastToken;
     }
 
     updateDisplay();
